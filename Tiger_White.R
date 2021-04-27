@@ -1,6 +1,6 @@
 # Estimation of Tiger and White shark size after release
-
-setwd("C:/Matias/Analyses/Length conversions")
+handl_OneDrive=function(x)paste('C:/Users/myb/OneDrive - Department of Primary Industries and Regional Development/Matias',x,sep='/')
+setwd(handl_OneDrive("Analyses/Length conversions"))
 #Growth Parameters
 
   #Tiger
