@@ -47,7 +47,7 @@ ggplotRegression <- function(dat, xvar, yvar,tolerance=2,SP)
   if(xvar=='fl' | yvar=='fl') dat=dat%>%filter(fl<=350)
   if(xvar=='idl' | yvar=='idl') dat=dat%>%filter(idl>10)
   
-  p=NULL
+  p=OUT=NULL
   if(nrow(dat)>=Min.obs)
   {
     if(SP=="GM")   #systematic mis measurment by these recorders
@@ -119,9 +119,15 @@ ggplotRegression <- function(dat, xvar, yvar,tolerance=2,SP)
                          " Slope=",signif(fit$coef[[2]], 5)))+
       theme(plot.title = element_text(size=10))
     
+    #get coefficients and SE
+    out <- summary(fit)
+    OUT=data.frame(out$coefficients[,1:2])
+    OUT$r2=round(r2ww(fit),3)
+    OUT$Species=unique(dat$common_name)
+    
   }
+  return(list(p=p,OUT=OUT))
   
-  return(p)
 }
 fn.idl=function(SP)
 {
@@ -130,7 +136,7 @@ fn.idl=function(SP)
   FL.TL=ggplotRegression(dat=d, xvar="fl", yvar="tl",SP=SP)
   idl.TL=ggplotRegression(dat=d, xvar="idl", yvar="tl",SP=SP)
   idl.FL=ggplotRegression(dat=d, xvar="idl", yvar="fl",SP=SP)
-  La.lista=list(TL.FL, idl.TL, FL.TL, idl.FL)
+  La.lista=list(TL.FL$p, idl.TL$p, FL.TL$p, idl.FL$p)
   La.lista=La.lista%>% discard(is.null)
   ggarrange(plotlist=La.lista)
   W=8
@@ -142,8 +148,18 @@ fn.idl=function(SP)
   }
   ggsave(paste(unique(d$common_name),".tiff",sep=''), width = W,height = H, dpi = 300,
          compression = "lzw")
+  
+  return(list(TL.FL=TL.FL$OUT,FL.TL=FL.TL$OUT,idl.TL=idl.TL$OUT,idl.FL=idl.FL$OUT))
 }
-for(i in 1:length(idl.species)) fn.idl(SP=idl.species[i])
+Store=vector('list',length(idl.species))
+
+for(i in 1:length(idl.species))  Store[[i]]=fn.idl(SP=idl.species[i])
+
+#export coefficients
+for(i in 1:length(idl.species))
+{
+  write.csv(do.call(rbind,Store[[i]]),paste("Coefficients_",idl.species[i],".csv",sep=""),row.names=T)
+}
 
 
 # Size comp for Maddie --------------------------------------------------------------
